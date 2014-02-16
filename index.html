@@ -29,6 +29,30 @@
         <link href="kendo/styles/kendo.mobile.all.min.css" rel="stylesheet" />
         <script src="kendo/js/jquery.min.js"></script>
         <script src="kendo/js/kendo.mobile.min.js"></script>
+        <!-- add the google maps scripts -->
+        <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=true"></script>
+        <script type="text/javascript">
+                document.addEventListener("deviceready", onDeviceReady, false);
+                // Cordova esta disponible!
+                //
+                function onDeviceReady() {
+                alert("deviceready listo!!")
+                }
+
+                function mostrarPosicion(){
+                    navigator.geolocation.getCurrentPosition(lecturaExitosa, error , {enableHighAccuracy: true } );
+                }
+                function lecturaExitosa(posicion) {
+                    //alert(' tu posicion es: Latitud ' + posicion.coords.latitude+'\n' + 'Longitud '+ posicion.coords.longitude );
+                    var latlng2 = new google.maps.LatLng(posicion.coords.latitude,posicion.coords.longitude);
+                    map.setCenter(latlng2);
+                    marcador.setPosition(latlng2);
+                }
+                function error(){
+                    alert(' no puedo encontrarte :(');
+                }                   
+        </script>	
+        
     </head>
     <body>
         <div data-role="view" id="badges-profile" data-title="Profile" data-layout="mobile-tabstrip" data-show="addTimer" data-hide="removeTimer">
@@ -81,6 +105,13 @@
             </ul>
         </div>
 
+        <!-- hook up to the init event of the view and initialize the google map -->
+        <div data-role="view" data-layout="mobile-tabstrip"  data-init="buildMap" id="map" data-title="Contacto">
+            <div id="map_canvas" style="width:100%;height: 100%; position: absolute;"></div>
+             <button  style="width:49px;height:50px; right:50%;bottom:0;position: absolute;left:50%; background-color: transparent; border: none;background-image: url('images/find.png') !important; background-repeat: no-repeat; background-position: center; box-shadow:10px 10px 5px #888888; " onclick="mostrarPosicion();" class='km-button'></button>
+
+        </div>
+        
         <div data-role="view" id="badges-sales" data-title="Sales History" data-layout="mobile-tabstrip">
             <ul data-role="listview" data-style="inset" data-type="group">
                 <li>
@@ -116,8 +147,9 @@
 
             <div data-role="footer">
                 <div data-role="tabstrip" id="badges-tabs">
-                    <a href="#badges-profile" data-icon="home">Home
-                    </a><a href="#badges-sales" data-icon="edit" data-badge="10">Mail</a>
+                    <a href="#badges-profile" data-icon="home">Home</a>
+                    <a href="#badges-sales" data-icon="edit" data-badge="10">Mail</a>
+                    <a href="#map" data-icon="globe">Contact</a>
                 </div>
             </div>
         </div>
@@ -136,7 +168,7 @@
             }
 
             function addTimer() {
-                timer = setInterval(changeTabBadge, 1000);
+                timer = setInterval(changeTabBadge, 100000);
             }
 
             function removeTimer() {
@@ -176,10 +208,47 @@
             .sales-hold { color: blue; }
             .value { color: #bbb; }
         </style>
-
-
         <script>
-            var app = new kendo.mobile.Application(document.body);
+                var app = new kendo.mobile.Application(document.body);
+
+                //initialize the google map
+                var map;
+                var marker;
+                function buildMap(e) {
+                    var myOptions = {
+                        center: new google.maps.LatLng(41.375553,2.149284),
+                        zoom: 15,
+                        mapTypeId: google.maps.MapTypeId.ROADMAP
+                    };
+
+                    var mapElement = $("#map_canvas");
+                    var container = e.view.content;
+
+                    map = new google.maps.Map(mapElement[0], myOptions);
+                    var latlng = new google.maps.LatLng(41.375553,2.149284);
+
+                    marcador = new google.maps.Marker( {
+                          map:map,
+                          draggable:  false,
+                        animation:  google.maps.Animation.DROP
+                    })
+                    marker = new google.maps.Marker({
+                        map:        map,
+                        draggable:  false,
+                        animation:  google.maps.Animation.DROP,
+                        icon: 'http://www.adapptalo.com/test/icon.png',
+                        position:   latlng
+                    });
+                    google.maps.event.addListener(marker, 'click', toggleBounce);
+
+                }
+                function toggleBounce() {
+                    if (marker.getAnimation() !== null) {
+                      marker.setAnimation(null);
+                    } else {
+                      marker.setAnimation(google.maps.Animation.BOUNCE);
+                    }
+                }
         </script>
         <div class="app">
             <h1>PhoneGap</h1>
